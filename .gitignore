@@ -1,0 +1,24 @@
+
+__MACOSX/
+
+.DS_Store
+
+*.zip
+
+# --- C++ / CUDA Build Artifacts ---
+# Object files generated during compilation
+*.o
+*.obj
+
+*.d
+
+
+*.out
+*.exe
+*.app
+
+
+
+.vscode/
+.idea/
+*.swp
