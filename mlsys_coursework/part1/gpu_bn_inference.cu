@@ -4,7 +4,7 @@
 
 #define FULL_MASK 0xffffffffu
 constexpr int THREADS_PER_WARP = 32;
-#define BLOCK_SIZE 256
+#define BLOCK_SIZE 1024
 
 // Note: 1. External libraries are not allowed 
 //       2. The solve function signature must keep unchanged 
