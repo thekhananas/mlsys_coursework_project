@@ -52,46 +52,43 @@ __global__ void gpu_bn_inference_nchw(
     __shared__ float s_mean;
     __shared__ float s_var;
 
-    int plane_size = H * W;
-    int stride = C * plane_size; // Distance between batches in NCHW
+    // Pre-calculate plane size and channel offsets
+    int plane = H * W;
+    int channel_offset = c * plane;
     
-    // Base pointers for this channel
-    const float* x_in = x + c * plane_size;
-    float* y_out = y + c * plane_size;
-
     // Step 1: Accumulate Sum and Sum-Squares
     float local_sum = 0.0f;
     float local_sq = 0.0f;
 
-    // Optimization: Check if we can use float4 (requires size divisible by 4)
-    // Most standard benchmarks (like ResNet) have H*W divisible by 4
-    if (plane_size % 4 == 0) {
-        int plane_vec = plane_size / 4;
+    // Use float4 to load 4 elements at once for better bandwidth
+    // We treat the pointer as a float4 array
+    int vec_limit = plane / 4; 
+
+    for (int n = 0; n < N; ++n) {
+        int batch_offset = n * C * plane + channel_offset;
+        const float* src = x + batch_offset;
         
-        for (int n = 0; n < N; ++n) {
-            // Reinterpret pointer as float4 for vectorized load
-            // Note: offset must be calculated in bytes/floats first
-            const float4* x_vec = (const float4*)(x_in + n * stride);
+        // Reinterpret cast to read 4 floats at a time
+        const float4* src4 = (const float4*)src;
+
+        // Vectorized loop
+        for (int i = tid; i < vec_limit; i += blockDim.x) {
+            float4 v = src4[i];
             
-            for (int i = tid; i < plane_vec; i += blockDim.x) {
-                float4 v = x_vec[i];
-                
-                local_sum += v.x + v.y + v.z + v.w;
-                local_sq += v.x*v.x + v.y*v.y + v.z*v.z + v.w*v.w;
-            }
+            local_sum += v.x + v.y + v.z + v.w;
+            local_sq += v.x*v.x + v.y*v.y + v.z*v.z + v.w*v.w;
         }
-    } else {
-        // Fallback for odd shapes
-        for (int n = 0; n < N; ++n) {
-            int batch_offset = n * stride;
-            for (int i = tid; i < plane_size; i += blockDim.x) {
-                float val = x_in[batch_offset + i];
-                local_sum += val;
-                local_sq += val * val;
-            }
+
+        // Cleanup loop for remaining pixels if H*W is not divisible by 4
+        int remainder_start = vec_limit * 4;
+        for (int i = remainder_start + tid; i < plane; i += blockDim.x) {
+            float val = src[i];
+            local_sum += val;
+            local_sq += val * val;
         }
     }
 
+    // Reduce
     float reduce_sum = block_reduce_sum(local_sum, sdata);
     if (tid == 0) s_mean = reduce_sum;
     __syncthreads();
@@ -100,18 +97,16 @@ __global__ void gpu_bn_inference_nchw(
     if (tid == 0) s_var = reduce_sq;
     __syncthreads();
 
-    // Step 2: Calculate Constants
+    // Step 2: Normalize
+    // Thread 0 calculates the fused scale/shift
     if (tid == 0) {
-        // Use fast inverse approximate for division
-        float inv_n = 1.0f / (float)(N * plane_size);
-        float mean = s_mean * inv_n;
-        float mean_sq = s_var * inv_n;
+        float mean = s_mean / (N * plane);
+        float mean_sq = s_var / (N * plane);
         float var = mean_sq - (mean * mean);
-
+        
         float inv_std = rsqrtf(var + eps);
         
-        // y = scale * x + shift
-        s_mean = gamma[c] * inv_std;                 // scale
+        s_mean = gamma[c] * inv_std;                   // scale
         s_var = beta[c] - (gamma[c] * mean * inv_std); // shift
     }
     __syncthreads();
@@ -119,34 +114,32 @@ __global__ void gpu_bn_inference_nchw(
     float scale = s_mean;
     float shift = s_var;
 
-    // Step 3: Normalize and Write (Vectorized)
-    if (plane_size % 4 == 0) {
-        int plane_vec = plane_size / 4;
-        for (int n = 0; n < N; ++n) {
-            // Pointers for current batch
-            const float4* x_vec = (const float4*)(x_in + n * stride);
-            float4* y_vec = (float4*)(y_out + n * stride);
+    // Apply normalization
+    for (int n = 0; n < N; ++n) {
+        int batch_offset = n * C * plane + channel_offset;
+        const float* src = x + batch_offset;
+        float* dst = y + batch_offset;
+        
+        const float4* src4 = (const float4*)src;
+        float4* dst4 = (float4*)dst;
 
-            for (int i = tid; i < plane_vec; i += blockDim.x) {
-                float4 v = x_vec[i];
-                float4 res;
-                
-                res.x = scale * v.x + shift;
-                res.y = scale * v.y + shift;
-                res.z = scale * v.z + shift;
-                res.w = scale * v.w + shift;
-                
-                y_vec[i] = res;
-            }
+        // Vectorized write
+        for (int i = tid; i < vec_limit; i += blockDim.x) {
+            float4 v = src4[i];
+            
+            // Normalize all 4 components
+            v.x = scale * v.x + shift;
+            v.y = scale * v.y + shift;
+            v.z = scale * v.z + shift;
+            v.w = scale * v.w + shift;
+            
+            dst4[i] = v;
         }
-    } else {
-        // Fallback
-        for (int n = 0; n < N; ++n) {
-            int batch_offset = n * stride;
-            for (int i = tid; i < plane_size; i += blockDim.x) {
-                int idx = batch_offset + i;
-                y_out[idx] = scale * x_in[idx] + shift;
-            }
+
+        // Cleanup write
+        int remainder_start = vec_limit * 4;
+        for (int i = remainder_start + tid; i < plane; i += blockDim.x) {
+            dst[i] = scale * src[i] + shift;
         }
     }
 }
