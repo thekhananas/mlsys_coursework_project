@@ -1,0 +1,160 @@
+\documentclass[a4paper, 11pt]{article}
+
+%%%%%%%%%%%%
+% Packages %
+%%%%%%%%%%%%
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[margin=2.5cm]{geometry} % Standard margins
+\usepackage{amsmath}  % For math
+\usepackage{amssymb}  % For symbols
+\usepackage{graphicx} % For images
+\usepackage{booktabs} % For professional tables
+\usepackage{subcaption} % For side-by-side images (subfigures)
+\usepackage{float}    % For precise image placement [H]
+\usepackage{hyperref} % For clickable links
+\usepackage{parskip}  % Adds space between paragraphs instead of indentation
+\usepackage{tikz}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+% Packages
+
+
+
+\usepackage{listings}
+\usepackage{pgfplots}
+
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, fit, backgrounds, decorations.pathreplacing}
+\pgfplotsset{compat=1.18}
+
+% Custom colors
+\definecolor{cudagreen}{RGB}{118,185,0}
+\definecolor{cudablue}{RGB}{0,114,188}
+\definecolor{cudaorange}{RGB}{255,127,0}
+\definecolor{warpdiv}{RGB}{220,50,50}
+\definecolor{sharedmem}{RGB}{255,215,0}
+\definecolor{globalmem}{RGB}{100,149,237}
+\definecolor{codebg}{RGB}{248,248,248}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+
+% Setup hyperlinks to look professional (blue, no boxes)
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    citecolor=blue
+}
+
+%%%%%%%%%%
+% Macros %
+%%%%%%%%%%
+\newcommand{\ttbf}[1]{\texttt{\textbf{#1}}}
+
+%%%%%%%%%%%%%%%%
+% Title Details %
+%%%%%%%%%%%%%%%%
+\title{
+    \textbf{Machine Learning Systems and Hardware (COMP70114)}\\
+    \large Coursework: CUDA Kernel Development Report
+}
+\author{
+    \textbf{Author}\\
+    Anas Khan\\
+    \\
+    \textit{Imperial College London} \\
+    \textit{Department of Computer Science}
+}
+\date{\today}
+
+%%%%%%%%%%%%
+% Document %
+%%%%%%%%%%%%
+
+\begin{document}
+
+\maketitle
+
+% Optional: Abstract or Table of Contents could go here
+% \tableofcontents
+% \newpage
+
+\section{Introduction: Part 1}
+
+This report details our approach towards implementing \textbf{Batch Normalisation Inference} for tensors in NCHW (Batch, Channel, Height, Weight) memory layout using a CUDA kernel. 
+
+
+% This operation is fundatmental to deep learning architecture and is mathematically defined as:
+
+% \begin{equation}
+% y_{n,c,h,w} = \gamma_c \cdot \frac{x_{n,c,h,w} - \mu_c}{\sqrt{\sigma^2_c + \epsilon}} + \beta_c
+% \end{equation}
+
+
+% \subsection{Data Flow Overview}
+
+% \begin{figure}[H]
+%     \centering
+%     \resizebox{\textwidth}{!}{%
+%     \begin{tikzpicture}[
+%     stage/.style={rectangle, draw=cudablue, fill=cudablue!15, rounded corners, minimum width=3cm, minimum height=1cm, align=center, font=\small},
+%     data/.style={ellipse, draw=cudagreen, fill=cudagreen!15, minimum width=2.2cm, minimum height=0.8cm, font=\small},
+%     arrow/.style={-{Stealth[length=3mm]}, thick, cudablue},
+%     note/.style={font=\scriptsize, text width=3cm, align=center}
+% ]
+
+% % Stages
+% \node[stage] (load) at (0, 0) {Load Input\\(Vectorized)};
+% \node[stage] (accum) at (4, 0) {Accumulate\\Sum \& Sum$^2$};
+% \node[stage] (reduce) at (8, 0) {Block\\Reduction};
+% \node[stage] (stats) at (12, 0) {Compute\\$\mu$, $\sigma^2$};
+% \node[stage] (norm) at (8, -2.5) {Apply\\Normalization};
+% \node[stage] (store) at (4, -2.5) {Store Output\\(Vectorized)};
+
+% % Data nodes
+% \node[data] (x) at (-2.5, 0) {x[N,C,H,W]};
+% \node[data] (y) at (1.5, -2.5) {y[N,C,H,W]};
+% \node[data] (params) at (14.5, 0) {$\gamma$, $\beta$};
+
+% % Arrows
+% \draw[arrow] (x) -- (load);
+% \draw[arrow] (load) -- (accum);
+% \draw[arrow] (accum) -- (reduce);
+% \draw[arrow] (reduce) -- (stats);
+% \draw[arrow] (params) -- (stats);
+% \draw[arrow] (stats) -- (norm);
+% \draw[arrow] (norm) -- (store);
+% \draw[arrow] (store) -- (y);
+
+% % Notes
+% \node[note, below=0.3cm of load] {float4 reads};
+% \node[note, below=0.3cm of reduce] {Warp + Block};
+% \node[note, above=0.3cm of norm] {Fused scale/shift};
+
+% \end{tikzpicture}%
+% }
+
+%     \caption{High-level data flow through the batch normalisation kernel}
+%     \label{fig:dataflow}
+% \end{figure}
+
+
+\subsection{Correctness and Performance Metrics}
+
+We were able to achieve the \textbf{Time Cost} of \textbf{0.983ms} through our implementation which passed all test cases with efficiently across all the shared benchmarks as provided in the \ref{fig:batchnormresult}.  
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{resources/Batchnorm-CUDA-Submission-AnasKhan.pdf}
+    \caption{Screenshot from the evaluation portal}
+    \label{fig:batchnormresult}
+\end{figure}
+
+
+
+
+
+
+\end{document}
