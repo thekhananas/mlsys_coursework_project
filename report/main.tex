@@ -1,144 +1,92 @@
-\documentclass[a4paper, 11pt]{article}
-
-%%%%%%%%%%%%
-% Packages %
-%%%%%%%%%%%%
-\usepackage[utf8]{inputenc}
-\usepackage[english]{babel}
-\usepackage[margin=2.5cm]{geometry} % Standard margins
-\usepackage{amsmath}  % For math
-\usepackage{amssymb}  % For symbols
-\usepackage{graphicx} % For images
-\usepackage{booktabs} % For professional tables
-\usepackage{subcaption} % For side-by-side images (subfigures)
-\usepackage{float}    % For precise image placement [H]
-\usepackage{hyperref} % For clickable links
-\usepackage{parskip}  % Adds space between paragraphs instead of indentation
-\usepackage{tikz}
-\usepackage{tcolorbox}
+\documentclass[11pt]{article}
+\usepackage[margin=0.85in]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
 \usepackage{xcolor}
-% Packages
-
-
-
 \usepackage{listings}
-\usepackage{pgfplots}
+\usepackage{float}
+\usepackage{enumitem}
+\setlist{nosep,leftmargin=*}
 
-\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, fit, backgrounds, decorations.pathreplacing}
-\pgfplotsset{compat=1.18}
-
-% Custom colors
-\definecolor{cudagreen}{RGB}{118,185,0}
-\definecolor{cudablue}{RGB}{0,114,188}
-\definecolor{cudaorange}{RGB}{255,127,0}
-\definecolor{warpdiv}{RGB}{220,50,50}
-\definecolor{sharedmem}{RGB}{255,215,0}
-\definecolor{globalmem}{RGB}{100,149,237}
-\definecolor{codebg}{RGB}{248,248,248}
-\definecolor{codegreen}{rgb}{0,0.6,0}
-\definecolor{codegray}{rgb}{0.5,0.5,0.5}
-\definecolor{codepurple}{rgb}{0.58,0,0.82}
-
-% Setup hyperlinks to look professional (blue, no boxes)
-\hypersetup{
-    colorlinks=true,
-    linkcolor=blue,
-    filecolor=magenta,      
-    urlcolor=cyan,
-    citecolor=blue
+\lstset{
+    basicstyle=\ttfamily\scriptsize,
+    keywordstyle=\color{blue}\bfseries,
+    breaklines=true,
+    frame=single,
+    numbers=none,
+    aboveskip=3pt,belowskip=3pt
 }
 
-%%%%%%%%%%
-% Macros %
-%%%%%%%%%%
-\newcommand{\ttbf}[1]{\texttt{\textbf{#1}}}
+\setlength{\parskip}{0.3em}
+\setlength{\parindent}{0em}
 
-%%%%%%%%%%%%%%%%
-% Title Details %
-%%%%%%%%%%%%%%%%
-\title{
-    \textbf{Machine Learning Systems and Hardware (COMP70114)}\\
-    \large Coursework: CUDA Kernel Development Report
-}
-\author{
-    \textbf{Author}\\
-    Anas Khan\\
-    % \\
-    % \textit{Imperial College London} \\
-    % \textit{Department of Computer Science}
-}
-\date{\today}
-
-%%%%%%%%%%%%
-% Document %
-%%%%%%%%%%%%
+\title{\vspace{-1.5cm}\textbf{Machine Learning Systems and Hardware (COMP70114)}\\
+\large Coursework: CUDA Kernel Development Report\vspace{-0.3cm}}
+\author{Anas Khan}
+\date{November 27, 2025}
 
 \begin{document}
-
 \maketitle
 
-% Optional: Abstract or Table of Contents could go here
-% \tableofcontents
-% \newpage
-\vspace{-3em}
-\section{Introduction: Part 1}
-\vspace{-0.5em}
-This report details our approach towards implementing Batch Normalisation Inference for tensors in NCHW (Batch, Channel, Height, Weight) memory layout using a CUDA kernel. 
+\section{Part 1: Batch Normalization Inference}
 
-\subsection{Correctness and Performance Metrics}
-
-We were able to achieve the \textbf{Time Cost} of \textbf{0.983\,ms} through this implementation which passed all test cases with efficiently across all the benchmarks (see Figure~\ref{fig:batchnormresult}).  
-\vspace{-4em}
+\textbf{Performance:} Time Cost \textbf{0.981\,ms}, passing \textbf{4/4} test cases (Submission \#3869).
+\vspace{-8em}
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=\linewidth]{resources/Batchnorm-CUDA-Submission-AnasKhan.pdf}
-    \caption{The evaluation of the problem one achieved a time cost of 0.983ms}
-    \label{fig:batchnormresult}
+\centering
+\includegraphics[width=\linewidth, trim=0 5cm 0 0cm, clip]{resources/Batchnorm-Submission-AK-0.981.pdf}
+% \vspace{-0.2cm}
+\caption{Batch Normalization results.}
+\label{fig:bn}
 \end{figure}
-\vspace{-2em}
-\subsection{Brief Implementation Explanation}
+% \vspace{-0.4cm}
 
+\subsection*{Kernel Design and Optimizations}
+
+\textbf{One-Block-Per-Channel Architecture:} Grid dimensions \texttt{(C,1,1)} map each block to one channel. Each block independently computes $\mu_c$ and $\sigma^2_c$ across all spatial ($H \times W$) and batch ($N$) elements, eliminating inter-block synchronization.
+
+\textbf{Vectorized Memory Access (\texttt{float4}):} 128-bit transactions load 4 floats per memory operation, achieving optimal coalescing:
+\begin{lstlisting}[language=C]
+const float4* src4 = (const float4*)src;
+float4 v = src4[i];  // Single 128-bit coalesced load
+local_sum += v.x + v.y + v.z + v.w;
+local_sq  += v.x*v.x + v.y*v.y + v.z*v.z + v.w*v.w;
+\end{lstlisting}
+
+A cleanup loop handles remainders when $H \times W \bmod 4 \neq 0$.
+
+\textbf{Two-Level Parallel Reduction:}
 \begin{itemize}
-
-
-    \item \textbf{Architectural Strategy (One-Block-Per-Channel):} The grid dimension was $(C, 1, 1)$. This mapped one CUDA Thread Block distinctively to one Feature Channel. This approach allowed a block to stay alive to process the entire spatial ($H \times W$) and batch ($N$) domain for that specific channel.
-    
-    \item \textbf{Vectorised Global Memory Access (Memory Coalescing):} The use of the input pointer to \texttt{float4*} allowed each thread to load 4 conseuctive floaring point (16 bytes) in a single function.
-
-    \item \textbf{Register-Level Accumulation (Loop Unrolling):} During the accumulation phase, the sums and squared sums are stored in local registers rather than wrting into shared memory. This reduces shared memory bank conflicts.
+    \item \textit{Warp-level:} \texttt{\_\_shfl\_down\_sync()} reduces within each 32-thread warp without shared memory, eliminating bank conflicts.
+    \item \textit{Block-level:} Only 32 floats of shared memory store warp partial sums, which are then reduced by warp 0.
 \end{itemize}
 
-\section{Introduction: Part 2}
-\vspace{-0.5em}
-In the second part the kernel, implements a direct standard convolution algorithm optimized for \textit{Depthwise} layers. In a Depthwise 2D Convolution, the channel interaction is removed; each input channel is convolved with its own unique 2D filter to produce one output channel.
-\vspace{-6.5em}
+\textbf{Register-Level Accumulation:} Partial sums (\texttt{local\_sum}, \texttt{local\_sq}) accumulate in registers throughout the spatial/batch loops, avoiding shared memory traffic.
+
+\textbf{Fused Scale-Shift Transformation:} The output normalization $y = \gamma \frac{x - \mu}{\sqrt{\sigma^2 + \varepsilon}} + \beta$ is algebraically rewritten as a single FMA: $y = \text{scale} \cdot x + \text{shift}$, where both constants are precomputed by thread 0 using \texttt{rsqrtf()} for fast reciprocal square root.
+
+\section{Part 2: Depthwise 2D Convolution}
+
+\textbf{Performance:} Time Cost \textbf{0.098\,ms}, passing \textbf{5/5} test cases (Submission \#3747).
+
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=\linewidth]{resources/AnasKhan_DWC_Submission_Eval.pdf}
-    \caption{The evaluation of the problem two achieved a time cost of 0.098ms}
-    \label{fig:dwcevalresult}
+\centering
+\vspace{-0.2cm}
+\includegraphics[width=\linewidth, trim=0 5cm 0 5cm, clip]{resources/AnasKhan_DWC_Submission_Eval.pdf}
+\caption{Depthwise Convolution results.}
+\label{fig:dwc}
 \end{figure}
+\vspace{-0.4cm}
 
-\vspace{-2em}
-\subsection{Correctness and Performance Metrics}
+\subsection*{Kernel Design and Optimizations}
 
-The best submission passed all the test cases efficiently and achieved a promising execution time of \textbf{0.098\,ms} (see Figure~\ref{fig:dwcevalresult}).
+\textbf{One-Thread-Per-Output-Pixel Strategy:} Each thread computes exactly one $y[n,c,oh,ow]$, ensuring race-free execution without atomics. The 3D grid \texttt{(spatial\_blocks, C, N)} naturally maps to NCHW layout.
 
+\textbf{Memory Coalescing via Spatial Indexing:} The $x$-dimension maps to output width ($OW$), so consecutive threads access consecutive input addresses when \texttt{stride=1}: threads read \texttt{x[...+(ow*stride+kw)]}, yielding coalesced 128B transactions.
 
-\subsection{Brief Implementation Explanation}
+\textbf{Implicit Zero-Padding:} Rather than allocating padded input, boundary checks (\texttt{ih $\geq$ 0 \&\& ih < H \&\& iw $\geq$ 0 \&\& iw < W}) implicitly treat out-of-bounds as zero, saving memory and avoiding copy overhead.
 
-\begin{itemize}
-    \item The kernel employs a \textbf{One-Thread-Per-Output-Pixel} strategy. This is a common baseline approach where parallelism is achieved by assigning independent threads to calculate every single pixel in the output tensor $Y$.
-
-This mapping ensures that every output pixel is computed by exactly one thread, avoiding race conditions (no atomics needed).
-
-\item Global Memory Access Pattern:
-The spatial indexing strategy ($x$ dimension maps to $OW$) promotes memory coalescing. 
-
-When loading $x$, threads access $x[\dots + (ow \cdot stride + kw)]$. If $stride=1$, these are perfectly contiguous addresses.
-
-\end{itemize}
-
-\vspace{1em}
+\textbf{Register-Based Convolution:} The $K_H \times K_W$ convolution accumulates in a register variable (\texttt{sum}), with a single global memory write per output pixel.
 
 \end{document}

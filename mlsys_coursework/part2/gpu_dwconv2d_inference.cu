@@ -20,15 +20,13 @@ __global__ void gpu_dwconv2d(
 {
     // TODO: Your Kernel Implementation
     
-    // Map grid dimensions to N and C
+    
     int n = blockIdx.z;
     int c = blockIdx.y;
 
-    // Map 1D block/thread index to spatial coordinates
+    
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     
-    // Check boundaries
-    // We implicitly trust gridDim.z and gridDim.y cover N and C correctly
     // We only need to guard the linear spatial index
     if (tid < OH * OW) {
         // Recover output height and width indices from linear index
@@ -37,8 +35,7 @@ __global__ void gpu_dwconv2d(
 
         float sum = 0.0f;
 
-        // Depthwise convolution: 
-        // Iterate over kernel window. 
+        // Depthwise convolution: Iterate over kernel window. 
         // Note: For dwconv, there is only 1 channel in the kernel per input channel.
         for(int kh = 0; kh < KH; ++kh) {
             for(int kw = 0; kw < KW; ++kw) {
@@ -62,7 +59,6 @@ __global__ void gpu_dwconv2d(
             }
         }
 
-        // Write result to output
         // Output y: [n, c, oh, ow]
         int y_idx = n * (C * OH * OW) + c * (OH * OW) + oh * OW + ow;
         y[y_idx] = sum;
@@ -86,14 +82,13 @@ void solve(const float* input,      // [N,C,H,W]
    
     // TODO: Kernel Configurabtions (dim3 block, dim3 grid)
     
-    // Kernel Configurations
-    // Standard block size
+    
     dim3 blockSize(256);
 
     // Calculate total spatial pixels to process per channel per batch
     int total_spatial = OH * OW;
     
-    // Grid Setup:
+    
     // x: Spatial pixels (enough blocks to cover OH*OW)
     // y: Channels (C)
     // z: Batch size (N)
