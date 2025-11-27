@@ -63,9 +63,9 @@
 \author{
     \textbf{Author}\\
     Anas Khan\\
-    \\
-    \textit{Imperial College London} \\
-    \textit{Department of Computer Science}
+    % \\
+    % \textit{Imperial College London} \\
+    % \textit{Department of Computer Science}
 }
 \date{\today}
 
@@ -80,81 +80,65 @@
 % Optional: Abstract or Table of Contents could go here
 % \tableofcontents
 % \newpage
-
+\vspace{-3em}
 \section{Introduction: Part 1}
-
-This report details our approach towards implementing \textbf{Batch Normalisation Inference} for tensors in NCHW (Batch, Channel, Height, Weight) memory layout using a CUDA kernel. 
-
-
-% This operation is fundatmental to deep learning architecture and is mathematically defined as:
-
-% \begin{equation}
-% y_{n,c,h,w} = \gamma_c \cdot \frac{x_{n,c,h,w} - \mu_c}{\sqrt{\sigma^2_c + \epsilon}} + \beta_c
-% \end{equation}
-
-
-% \subsection{Data Flow Overview}
-
-% \begin{figure}[H]
-%     \centering
-%     \resizebox{\textwidth}{!}{%
-%     \begin{tikzpicture}[
-%     stage/.style={rectangle, draw=cudablue, fill=cudablue!15, rounded corners, minimum width=3cm, minimum height=1cm, align=center, font=\small},
-%     data/.style={ellipse, draw=cudagreen, fill=cudagreen!15, minimum width=2.2cm, minimum height=0.8cm, font=\small},
-%     arrow/.style={-{Stealth[length=3mm]}, thick, cudablue},
-%     note/.style={font=\scriptsize, text width=3cm, align=center}
-% ]
-
-% % Stages
-% \node[stage] (load) at (0, 0) {Load Input\\(Vectorized)};
-% \node[stage] (accum) at (4, 0) {Accumulate\\Sum \& Sum$^2$};
-% \node[stage] (reduce) at (8, 0) {Block\\Reduction};
-% \node[stage] (stats) at (12, 0) {Compute\\$\mu$, $\sigma^2$};
-% \node[stage] (norm) at (8, -2.5) {Apply\\Normalization};
-% \node[stage] (store) at (4, -2.5) {Store Output\\(Vectorized)};
-
-% % Data nodes
-% \node[data] (x) at (-2.5, 0) {x[N,C,H,W]};
-% \node[data] (y) at (1.5, -2.5) {y[N,C,H,W]};
-% \node[data] (params) at (14.5, 0) {$\gamma$, $\beta$};
-
-% % Arrows
-% \draw[arrow] (x) -- (load);
-% \draw[arrow] (load) -- (accum);
-% \draw[arrow] (accum) -- (reduce);
-% \draw[arrow] (reduce) -- (stats);
-% \draw[arrow] (params) -- (stats);
-% \draw[arrow] (stats) -- (norm);
-% \draw[arrow] (norm) -- (store);
-% \draw[arrow] (store) -- (y);
-
-% % Notes
-% \node[note, below=0.3cm of load] {float4 reads};
-% \node[note, below=0.3cm of reduce] {Warp + Block};
-% \node[note, above=0.3cm of norm] {Fused scale/shift};
-
-% \end{tikzpicture}%
-% }
-
-%     \caption{High-level data flow through the batch normalisation kernel}
-%     \label{fig:dataflow}
-% \end{figure}
-
+\vspace{-0.5em}
+This report details our approach towards implementing Batch Normalisation Inference for tensors in NCHW (Batch, Channel, Height, Weight) memory layout using a CUDA kernel. 
 
 \subsection{Correctness and Performance Metrics}
 
-We were able to achieve the \textbf{Time Cost} of \textbf{0.983ms} through our implementation which passed all test cases with efficiently across all the shared benchmarks as provided in the \ref{fig:batchnormresult}.  
-
-\begin{figure}
+We were able to achieve the \textbf{Time Cost} of \textbf{0.983\,ms} through this implementation which passed all test cases with efficiently across all the benchmarks (see Figure~\ref{fig:batchnormresult}).  
+\vspace{-4em}
+\begin{figure}[H]
     \centering
     \includegraphics[width=\linewidth]{resources/Batchnorm-CUDA-Submission-AnasKhan.pdf}
-    \caption{Screenshot from the evaluation portal}
+    \caption{The evaluation of the problem one achieved a time cost of 0.983ms}
     \label{fig:batchnormresult}
 \end{figure}
+\vspace{-2em}
+\subsection{Brief Implementation Explanation}
+
+\begin{itemize}
 
 
+    \item \textbf{Architectural Strategy (One-Block-Per-Channel):} The grid dimension was $(C, 1, 1)$. This mapped one CUDA Thread Block distinctively to one Feature Channel. This approach allowed a block to stay alive to process the entire spatial ($H \times W$) and batch ($N$) domain for that specific channel.
+    
+    \item \textbf{Vectorised Global Memory Access (Memory Coalescing):} The use of the input pointer to \texttt{float4*} allowed each thread to load 4 conseuctive floaring point (16 bytes) in a single function.
+
+    \item \textbf{Register-Level Accumulation (Loop Unrolling):} During the accumulation phase, the sums and squared sums are stored in local registers rather than wrting into shared memory. This reduces shared memory bank conflicts.
+\end{itemize}
+
+\section{Introduction: Part 2}
+\vspace{-0.5em}
+In the second part the kernel, implements a direct standard convolution algorithm optimized for \textit{Depthwise} layers. In a Depthwise 2D Convolution, the channel interaction is removed; each input channel is convolved with its own unique 2D filter to produce one output channel.
+\vspace{-6.5em}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{resources/AnasKhan_DWC_Submission_Eval.pdf}
+    \caption{The evaluation of the problem two achieved a time cost of 0.098ms}
+    \label{fig:dwcevalresult}
+\end{figure}
+
+\vspace{-2em}
+\subsection{Correctness and Performance Metrics}
+
+The best submission passed all the test cases efficiently and achieved a promising execution time of \textbf{0.098\,ms} (see Figure~\ref{fig:dwcevalresult}).
 
 
+\subsection{Brief Implementation Explanation}
 
+\begin{itemize}
+    \item The kernel employs a \textbf{One-Thread-Per-Output-Pixel} strategy. This is a common baseline approach where parallelism is achieved by assigning independent threads to calculate every single pixel in the output tensor $Y$.
+
+This mapping ensures that every output pixel is computed by exactly one thread, avoiding race conditions (no atomics needed).
+
+\item Global Memory Access Pattern:
+The spatial indexing strategy ($x$ dimension maps to $OW$) promotes memory coalescing. 
+
+When loading $x$, threads access $x[\dots + (ow \cdot stride + kw)]$. If $stride=1$, these are perfectly contiguous addresses.
+
+\end{itemize}
+
+\vspace{1em}
 
 \end{document}

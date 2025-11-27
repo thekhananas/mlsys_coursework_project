@@ -26,11 +26,11 @@ __inline__ __device__ float block_reduce_sum(float val, float* shared_mem) {
     val = warp_reduce_sum(val);
 
     if (lane == 0) shared_mem[wid] = val;
-    __syncthreads();
+    __syncthreads(); // wait until every wrap has finished writing to the shared memory
 
     val = (threadIdx.x < (blockDim.x / THREADS_PER_WARP)) ? shared_mem[lane] : 0.0f;
 
-    if (wid == 0) val = warp_reduce_sum(val);
+    if (wid == 0) val = warp_reduce_sum(val); // this collapses all the partial sums of all wraps into a single value held by Thread 0 of Wrap 0
     
     return val;
 }
