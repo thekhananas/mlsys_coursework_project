@@ -1,24 +1,91 @@
+# ==========================================
+# OS & System Junk
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
+# macOS archive extraction artifacts
 __MACOSX/
 
-.DS_Store
-
-*.zip
-
-# --- C++ / CUDA Build Artifacts ---
-# Object files generated during compilation
-*.o
-*.obj
-
-*.d
-
-
-*.out
-*.exe
-*.app
-
-
-
+# ==========================================
+# Editor & IDE Configs
+# ==========================================
 .vscode/
 .idea/
 *.swp
+*.swo
+*~
+
+# ==========================================
+# Archives & Temporary Downloads
+# ==========================================
+*.zip
+*.tar.gz
+*.tgz
+*.gz
+*.7z
+*.crdownload
+
+# ==========================================
+# NVIDIA Nsight Profiling Output
+# ==========================================
+*.nsys-rep
+*.ncu-rep
+*.sqlite
+
+# ==========================================
+# C++ / CUDA Build Artifacts & Executables
+# ==========================================
+*.o
+*.obj
+*.d
+*.out
+*.exe
+*.app
+*.so
+*.dylib
+*.a
+*.lib
+
+# Binary test targets (compiled executable binaries without extensions)
+/mlsys_coursework/part1/test_bn
+/mlsys_coursework/part2/test_dwconv2d
+
+# ==========================================
+# LaTeX Intermediate Build Artifacts
+# ==========================================
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.glg
+*.glo
+*.gls
+*.idx
+*.ilg
+*.ind
+*.ist
+*.log
+*.nav
+*.out
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
+*.run.xml
+texput.log
+
+# ==========================================
+# PDF Build Outputs (Optional Rule)
+# ==========================================
+# If you want to ignore build-generated PDFs while tracking reference assets:
+# *.pdf
+# !70114_1_spec.pdf
+# !report/resources/*.pdf
