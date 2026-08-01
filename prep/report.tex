@@ -1,0 +1,139 @@
+\documentclass[8pt, a4paper, landscape]{article}
+\usepackage[margin=0.5cm]{geometry}
+\usepackage{multicol}
+\usepackage{amsmath, amssymb}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{xcolor}
+
+% Compact spacing for high density
+\setlist{nosep}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2pt}
+\titleformat{\section}{\bfseries\uppercase\small}{}{0em}{\underline}
+\titlespacing{\section}{0pt}{5pt}{2pt}
+
+\begin{document}
+\pagestyle{empty}
+\footnotesize
+
+\begin{multicols*}{3}
+
+\section{1. Operators \& FLOPs}
+\textbf{Fully Connected (Linear)}
+\begin{itemize}
+    \item Input $B \times N_{in}$, Weight $N_{in} \times N_{out}$
+    \item FLOPs: $2 \cdot B \cdot N_{in} \cdot N_{out}$
+    \item Params: $N_{in} \cdot N_{out} + N_{out}$
+\end{itemize}
+
+\textbf{2D Convolution}
+\begin{itemize}
+    \item Output: $H_{out} = \lfloor \frac{H_{in} + 2P - K}{S} \rfloor + 1$
+    \item FLOPs: $H_{out} W_{out} N_f (2 K_h K_w N_c - 1)$
+    \item Params: $N_f K_h K_w N_c + N_f$
+\end{itemize}
+
+\textbf{3D Convolution (Video)}
+\begin{itemize}
+    \item Input $D \times H \times W$, Kernel $K_d \times K_h \times K_w$
+    \item Captures temporal/volumetric features.
+\end{itemize}
+
+\textbf{Matrix Multiplication (GEMM)}
+\begin{itemize}
+    \item $C = A \times B$, $A \in [M, K], B \in [K, N]$
+    \item FLOPs: $2 \cdot M \cdot N \cdot K$
+\end{itemize}
+
+\section{2. Roofline Model Analysis}
+\begin{itemize}
+    \item \textbf{Operational Intensity (OI):} $\frac{\text{FLOPs}}{\text{Bytes}}$
+    \item \textbf{Model:} $P = \min(\pi, \beta \times OI)$
+    \item $\pi$: Peak Compute (TFLOPs), $\beta$: Bandwidth (TB/s)
+    \item \textbf{Ridge Point:} $(\pi/\beta, \pi)$
+    \item $OI < \pi/\beta \Rightarrow$ Memory-Bound
+    \item $OI > \pi/\beta \Rightarrow$ Compute-Bound
+\end{itemize}
+
+\section{3. Backpropagation (DAG)}
+\begin{itemize}
+    \item Gradient shape matches Tensor shape.
+    \item \textbf{Chain Rule:} $\frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \cdot \frac{\partial y}{\partial x}$
+    \item \textbf{Add ($z=x+y$):} Grads copy to branches.
+    \item \textbf{MatMul ($Y=XW$):} Transpose needed.
+    \item $\frac{\partial L}{\partial X} = \frac{\partial L}{\partial Y} W^T$, $\frac{\partial L}{\partial W} = X^T \frac{\partial L}{\partial Y}$
+    \item \textbf{Cost:} $\approx 2 \times$ Forward FLOPs.
+\end{itemize}
+
+\section{4. Hardware \& Mapping}
+\textbf{Systolic Arrays}
+\begin{itemize}
+    \item Array of PEs with local data passing.
+    \item \textbf{Weight Stationary:} Weights static. Good for Conv.
+    \item \textbf{Output Stationary:} Partials static. Good for GEMM.
+\end{itemize}
+\textbf{Mapping}
+\begin{itemize}
+    \item \textbf{Im2Col:} Patch $\to$ Col. Uses GEMM. High Mem.
+    \item \textbf{Line Buffer:} Specialized HW. Low Mem.
+\end{itemize}
+
+\section{5. Distributed Training}
+\begin{itemize}
+    \item \textbf{Data Parallel (DP):} Split batch. Sync Grads.
+    \item \textbf{Tensor Parallel (TP):} Split intra-layer.
+    \item \textbf{Pipeline Parallel (PP):} Split inter-layer. Bubbles.
+    \item \textbf{FSDP:} Shards params + opt + grads.
+\end{itemize}
+
+\section{6. Ring All-Reduce}
+\begin{itemize}
+    \item $N$ devices, Data size $K$.
+    \item Steps: $2(N-1)$.
+    \item Traffic/Device: $2 \frac{N-1}{N} K \approx 2K$.
+    \item Bandwidth optimal (indep. of $N$).
+\end{itemize}
+
+\section{7. Quantization}
+\begin{itemize}
+    \item $X_q = \text{round}(\frac{1}{S} X_{in}) + Z$
+    \item \textbf{PTQ:} Post-training. Fast, acc loss.
+    \item \textbf{QAT:} Fake quant in training. High acc.
+    \item \textbf{Types:} Linear, Logarithmic, BFP (Block Float).
+\end{itemize}
+
+\section{8. Pruning \& Sparsity}
+\begin{itemize}
+    \item \textbf{Unstructured:} Random. Hard to accel.
+    \item \textbf{Structured:} Channel/Layer. Easy accel.
+    \item \textbf{N:M:} Semi-structured (e.g. 2:4). NVIDIA Ampere.
+\end{itemize}
+
+\section{9. Federated Learning}
+\begin{itemize}
+    \item Train locally, send updates. Privacy.
+    \item \textbf{Cross-Silo:} Few, reliable, large data (Banks).
+    \item \textbf{Cross-Device:} Many, unreliable (Phones).
+\end{itemize}
+
+\section{10. Attention Optimizations}
+\begin{itemize}
+    \item KV Cache grows with context.
+    \item \textbf{MHA:} Unique K,V per head.
+    \item \textbf{MQA:} Shared K,V (1 head). Low mem.
+    \item \textbf{GQA:} Grouped K,V. (LLaMA-2).
+    \item \textbf{FlashAttn:} Tiling + Recompute. IO $O(N^2) \to O(N)$.
+\end{itemize}
+
+\section{11. Memory Hierarchy Specs}
+\begin{itemize}
+    \item \textbf{Regs:} $\approx 0$ lat.
+    \item \textbf{L1/Shared:} $\approx 30$ cyc. User-managed.
+    \item \textbf{L2:} $\approx 200$ cyc. Global vis.
+    \item \textbf{HBM:} $\approx 1000$ cyc. High BW.
+    \item \textbf{Bank Conflicts:} Serializes access.
+\end{itemize}
+
+\end{multicols*}
+\end{document}

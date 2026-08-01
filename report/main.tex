@@ -29,7 +29,7 @@
 \begin{document}
 \maketitle
 
-\section{Part 1: Batch Normalization Inference}
+\section{Part 1: Batch Normalisation Inference}
 
 \textbf{Performance:} Time Cost \textbf{0.981\,ms}, passing \textbf{4/4} test cases (Submission \#3869).
 \vspace{-8em}
@@ -37,16 +37,16 @@
 \centering
 \includegraphics[width=\linewidth, trim=0 5cm 0 0cm, clip]{resources/Batchnorm-Submission-AK-0.981.pdf}
 % \vspace{-0.2cm}
-\caption{Batch Normalization results.}
+\caption{Batch Normalisation results.}
 \label{fig:bn}
 \end{figure}
 % \vspace{-0.4cm}
 
-\subsection*{Kernel Design and Optimizations}
+\subsection*{Kernel Design and Optimisations}
 
-\textbf{One-Block-Per-Channel Architecture:} Grid dimensions \texttt{(C,1,1)} map each block to one channel. Each block independently computes $\mu_c$ and $\sigma^2_c$ across all spatial ($H \times W$) and batch ($N$) elements, eliminating inter-block synchronization.
+\textbf{One-Block-Per-Channel Architecture:} Grid dimensions \texttt{(C,1,1)} map each block to one channel. Each block independently computes $\mu_c$ and $\sigma^2_c$ across all spatial ($H \times W$) and batch ($N$) elements, eliminating inter-block synchronisation.
 
-\textbf{Vectorized Memory Access (\texttt{float4}):} 128-bit transactions load 4 floats per memory operation, achieving optimal coalescing:
+\textbf{Vectorised Memory Access (\texttt{float4}):} 128-bit transactions load 4 floats per memory operation, achieving optimal coalescing:
 \begin{lstlisting}[language=C]
 const float4* src4 = (const float4*)src;
 float4 v = src4[i];  // Single 128-bit coalesced load
@@ -64,7 +64,7 @@ A cleanup loop handles remainders when $H \times W \bmod 4 \neq 0$.
 
 \textbf{Register-Level Accumulation:} Partial sums (\texttt{local\_sum}, \texttt{local\_sq}) accumulate in registers throughout the spatial/batch loops, avoiding shared memory traffic.
 
-\textbf{Fused Scale-Shift Transformation:} The output normalization $y = \gamma \frac{x - \mu}{\sqrt{\sigma^2 + \varepsilon}} + \beta$ is algebraically rewritten as a single FMA: $y = \text{scale} \cdot x + \text{shift}$, where both constants are precomputed by thread 0 using \texttt{rsqrtf()} for fast reciprocal square root.
+\textbf{Fused Scale-Shift Transformation:} The output normalisation $y = \gamma \frac{x - \mu}{\sqrt{\sigma^2 + \varepsilon}} + \beta$ is algebraically rewritten as a single FMA: $y = \text{scale} \cdot x + \text{shift}$, where both constants are precomputed by thread 0 using \texttt{rsqrtf()} for fast reciprocal square root.
 
 \section{Part 2: Depthwise 2D Convolution}
 
@@ -79,7 +79,7 @@ A cleanup loop handles remainders when $H \times W \bmod 4 \neq 0$.
 \end{figure}
 \vspace{-0.4cm}
 
-\subsection*{Kernel Design and Optimizations}
+\subsection*{Kernel Design and Optimisations}
 
 \textbf{One-Thread-Per-Output-Pixel Strategy:} Each thread computes exactly one $y[n,c,oh,ow]$, ensuring race-free execution without atomics. The 3D grid \texttt{(spatial\_blocks, C, N)} naturally maps to NCHW layout.
 
