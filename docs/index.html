@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Anas Khan — CUDA Inference Acceleration</title>
+    <meta name="description" content="Custom high-performance CUDA kernels for Batch Normalisation and Depthwise 2D Convolution by Anas Khan (Imperial College London).">
+
+    <!-- Editorial Typography: Newsreader (Editorial Serif) + JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <content id="top">
+
+        <!-- Top Header & Bio -->
+        <div class="info">
+            <div class="namewrap">
+                <p class="name">Anas Khan</p>
+                <p class="role">Machine Learning Systems &amp; Hardware • Imperial College London</p>
+            </div>
+
+            <p class="bio">
+                Graduate engineer at Imperial College London (COMP70114). I design low-level CUDA kernels that eliminate memory-bandwidth bottlenecks in deep learning inference.
+            </p>
+
+            <div class="links">
+                <a class="link" href="https://github.com/thekhananas/mlsys_coursework_project" target="_blank" rel="noopener noreferrer">GitHub</a>
+                <p>/</p>
+                <a class="link" href="assets/report.pdf" target="_blank">Report (PDF)</a>
+                <p>/</p>
+                <a class="link" href="https://github.com/thekhananas/mlsys_coursework_project/blob/main/Kernel_Analysis.md" target="_blank">Kernel Analysis</a>
+                <p>/</p>
+                <a class="link" href="mailto:hello@anaskhan.com">Contact</a>
+            </div>
+        </div>
+
+        <!-- Work Showcase -->
+        <div class="work">
+
+            <!-- Case 01: Batch Normalisation -->
+            <div class="project">
+                
+                <!-- Square Visual Aid (1:1 Aspect Ratio Live Unit) -->
+                <div class="projectMedia">
+                    <div class="liveUnit squareBox">
+                        
+                        <div class="unitTopBar">
+                            <span class="unitKicker mono">Live Execution Flow</span>
+                            <span class="unitPill mono">4.8x Speedup</span>
+                        </div>
+
+                        <!-- Live Animated SVG Schema for Batch Normalisation -->
+                        <div class="svgStage">
+                            <svg class="animSvg" viewBox="0 0 460 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <!-- Background lanes -->
+                                <rect x="10" y="10" width="440" height="90" rx="8" class="laneBg laneNaive" />
+                                <rect x="10" y="115" width="440" height="95" rx="8" class="laneBg laneFused" />
+
+                                <!-- Labels -->
+                                <text x="24" y="32" class="svgLabel mono">STANDARD (UNFUSED 2-PASS)</text>
+                                <text x="350" y="32" class="svgTime mono slowTime">4.72 ms</text>
+
+                                <text x="24" y="137" class="svgLabel mono highlightLabel">CUSTOM (FUSED 1-PASS STREAM)</text>
+                                <text x="350" y="137" class="svgTime mono fastTime">0.981 ms</text>
+
+                                <!-- Top Lane: 2 Memory Roundtrips (Slow) -->
+                                <!-- Nodes -->
+                                <rect x="24" y="48" width="60" height="36" rx="4" class="nodeBox" />
+                                <text x="54" y="70" class="nodeText mono">DRAM</text>
+
+                                <rect x="135" y="48" width="85" height="36" rx="4" class="nodeBox" />
+                                <text x="177" y="70" class="nodeText mono">Pass 1: μ, σ²</text>
+
+                                <rect x="270" y="48" width="85" height="36" rx="4" class="nodeBox" />
+                                <text x="312" y="70" class="nodeText mono">Pass 2: Norm</text>
+
+                                <rect x="390" y="48" width="50" height="36" rx="4" class="nodeBox" />
+                                <text x="415" y="70" class="nodeText mono">DRAM</text>
+
+                                <!-- Slow Particle Path 1 -->
+                                <path d="M84 66 H135 M220 66 H270 M355 66 H390" class="wirePath wireSlow" />
+                                <circle r="4" class="pulseDot dotSlow dotSlow1">
+                                    <animateMotion path="M84 66 H135 M220 66 H270 M355 66 H390" dur="3.5s" repeatCount="indefinite" />
+                                </circle>
+
+                                <!-- Bottom Lane: Fused Streaming (Fast) -->
+                                <rect x="24" y="152" width="80" height="42" rx="4" class="nodeBox fastNode" />
+                                <text x="64" y="172" class="nodeText mono boldText">float4</text>
+                                <text x="64" y="185" class="nodeSubText mono">128-bit load</text>
+
+                                <rect x="145" y="152" width="105" height="42" rx="4" class="nodeBox fastNode" />
+                                <text x="197" y="172" class="nodeText mono boldText">Warp Shuffle</text>
+                                <text x="197" y="185" class="nodeSubText mono">__shfl_down_sync</text>
+
+                                <rect x="290" y="152" width="85" height="42" rx="4" class="nodeBox fastNode" />
+                                <text x="332" y="172" class="nodeText mono boldText">Fused FMA</text>
+                                <text x="332" y="185" class="nodeSubText mono">y = ax + b</text>
+
+                                <rect x="405" y="152" width="35" height="42" rx="4" class="nodeBox fastNode" />
+                                <text x="422" y="177" class="nodeText mono boldText">Out</text>
+
+                                <!-- Fast Streaming Particle Flow -->
+                                <path d="M104 173 H145 M250 173 H290 M375 173 H405" class="wirePath wireFast" />
+                                <circle r="4.5" class="pulseDot dotFast">
+                                    <animateMotion path="M104 173 H145 M250 173 H290 M375 173 H405" dur="1.1s" repeatCount="indefinite" />
+                                </circle>
+                                <circle r="4.5" class="pulseDot dotFast">
+                                    <animateMotion path="M104 173 H145 M250 173 H290 M375 173 H405" dur="1.1s" begin="0.55s" repeatCount="indefinite" />
+                                </circle>
+                            </svg>
+                        </div>
+
+                        <!-- Live Comparative Delta Bar -->
+                        <div class="unitBottomBar">
+                            <div class="deltaTrack">
+                                <span class="deltaLabel mono">CPU Ref</span>
+                                <div class="trackBg"><div class="trackFill fillSlow" style="width: 100%;"></div></div>
+                                <span class="deltaVal mono">4.72 ms</span>
+                            </div>
+                            <div class="deltaTrack">
+                                <span class="deltaLabel mono">Custom BN</span>
+                                <div class="trackBg"><div class="trackFill fillFast" style="width: 20.8%;"></div></div>
+                                <span class="deltaVal mono highlightVal">0.981 ms (742 GB/s)</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="projectInfo">
+                    <p class="projectDates">0.981 ms • 742 GB/s (84.3% VRAM Peak) • Submission #3739</p>
+                    <p class="projectTitle">
+                        <a class="titleLink" href="https://github.com/thekhananas/mlsys_coursework_project/blob/main/submission/gpu_bn_inference.cu" target="_blank">
+                            Batch Normalisation Inference Kernel ↗
+                        </a>
+                    </p>
+                    <p class="projectDescription">
+                        Fuses mean/variance reduction and affine normalization into a single memory pass. Uses 1-block-per-channel grid mapping, 128-bit <code>float4</code> vector loads, and register warp-shuffles (<code>__shfl_down_sync</code>) to collapse sums without shared-memory bank conflicts.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Case 02: Depthwise 2D Convolution -->
+            <div class="project">
+                
+                <!-- Square Visual Aid (1:1 Aspect Ratio Live Unit) -->
+                <div class="projectMedia">
+                    <div class="liveUnit squareBox">
+                        
+                        <div class="unitTopBar">
+                            <span class="unitKicker mono">Live Spatial Scanning</span>
+                            <span class="unitPill mono">6.2x Speedup</span>
+                        </div>
+
+                        <!-- Live Animated SVG for Depthwise Spatial Convolution -->
+                        <div class="svgStage">
+                            <svg class="animSvg" viewBox="0 0 460 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <!-- Input Tensor Region -->
+                                <text x="35" y="22" class="svgLabel mono">INPUT TENSOR (H × W)</text>
+                                
+                                <g class="tensorGrid" transform="translate(35, 34)">
+                                    <!-- 6x5 Grid of Pixels -->
+                                    <!-- Boundary Pixels (Implicit Zero) -->
+                                    <rect x="0" y="0" width="22" height="22" rx="3" class="pixelBox padPixel" />
+                                    <rect x="26" y="0" width="22" height="22" rx="3" class="pixelBox padPixel" />
+                                    <rect x="52" y="0" width="22" height="22" rx="3" class="pixelBox padPixel" />
+                                    <rect x="78" y="0" width="22" height="22" rx="3" class="pixelBox padPixel" />
+                                    <rect x="104" y="0" width="22" height="22" rx="3" class="pixelBox padPixel" />
+
+                                    <rect x="0" y="26" width="22" height="22" rx="3" class="pixelBox padPixel" />
+                                    <rect x="26" y="26" width="22" height="22" rx="3" class="pixelBox innerPixel" />
+                                    <rect x="52" y="26" width="22" height="22" rx="3" class="pixelBox innerPixel" />
+                                    <rect x="78" y="26" width="22" height="22" rx="3" class="pixelBox innerPixel" />
+                                    <rect x="104" y="26" width="22" height="22" rx="3" class="pixelBox padPixel" />
+
+                                    <rect x="0" y="52" width="22" height="22" rx="3" class="pixelBox padPixel" />
+                                    <rect x="26" y="52" width="22" height="22" rx="3" class="pixelBox innerPixel" />
+                                    <rect x="52" y="52" width="22" height="22" rx="3" class="pixelBox innerPixel" />
+                                    <rect x="78" y="52" width="22" height="22" rx="3" class="pixelBox innerPixel" />
+                                    <rect x="104" y="52" width="22" height="22" rx="3" class="pixelBox padPixel" />
+
+                                    <rect x="0" y="78" width="22" height="22" rx="3" class="pixelBox padPixel" />
+                                    <rect x="26" y="78" width="22" height="22" rx="3" class="pixelBox innerPixel" />
+                                    <rect x="52" y="78" width="22" height="22" rx="3" class="pixelBox innerPixel" />
+                                    <rect x="78" y="78" width="22" height="22" rx="3" class="pixelBox innerPixel" />
+                                    <rect x="104" y="78" width="22" height="22" rx="3" class="pixelBox padPixel" />
+
+                                    <rect x="0" y="104" width="22" height="22" rx="3" class="pixelBox padPixel" />
+                                    <rect x="26" y="104" width="22" height="22" rx="3" class="pixelBox padPixel" />
+                                    <rect x="52" y="104" width="22" height="22" rx="3" class="pixelBox padPixel" />
+                                    <rect x="78" y="104" width="22" height="22" rx="3" class="pixelBox padPixel" />
+                                    <rect x="104" y="104" width="22" height="22" rx="3" class="pixelBox padPixel" />
+
+                                    <!-- Sliding 3x3 Convolution Filter (Continuous Animation) -->
+                                    <rect x="0" y="0" width="74" height="74" rx="5" class="slidingFilter">
+                                        <animateTransform
+                                            attributeName="transform"
+                                            type="translate"
+                                            values="0,0; 26,0; 52,0; 52,26; 26,26; 0,26; 0,52; 26,52; 52,52; 0,0"
+                                            dur="6s"
+                                            repeatCount="indefinite"
+                                        />
+                                    </rect>
+                                </g>
+
+                                <!-- Transformation Arrow -->
+                                <path d="M195 98 H235" class="wirePath wireFast" />
+                                <text x="215" y="85" class="svgArrowText mono">1 Thread / Pixel</text>
+
+                                <!-- Output Tensor Region -->
+                                <text x="265" y="22" class="svgLabel mono">OUTPUT PIXELS (OH × OW)</text>
+                                
+                                <g class="outputGrid" transform="translate(265, 34)">
+                                    <!-- 3x3 Output Grid -->
+                                    <rect x="0" y="0" width="34" height="34" rx="4" class="outPixel pActive1" />
+                                    <rect x="42" y="0" width="34" height="34" rx="4" class="outPixel pActive2" />
+                                    <rect x="84" y="0" width="34" height="34" rx="4" class="outPixel pActive3" />
+
+                                    <rect x="0" y="42" width="34" height="34" rx="4" class="outPixel pActive6" />
+                                    <rect x="42" y="42" width="34" height="34" rx="4" class="outPixel pActive5" />
+                                    <rect x="84" y="42" width="34" height="34" rx="4" class="outPixel pActive4" />
+
+                                    <rect x="0" y="84" width="34" height="34" rx="4" class="outPixel pActive7" />
+                                    <rect x="42" y="84" width="34" height="34" rx="4" class="outPixel pActive8" />
+                                    <rect x="84" y="84" width="34" height="34" rx="4" class="outPixel pActive9" />
+                                </g>
+
+                                <!-- Legend Caption Inside SVG -->
+                                <circle cx="42" cy="188" r="4" class="padDot" />
+                                <text x="52" y="191" class="svgLegendText mono">Implicit Zero-Padding (ih &gt;= 0 &amp;&amp; ih &lt; H) • Zero Memory Allocations</text>
+                            </svg>
+                        </div>
+
+                        <!-- Live Comparative Delta Bar -->
+                        <div class="unitBottomBar">
+                            <div class="deltaTrack">
+                                <span class="deltaLabel mono">CPU Ref</span>
+                                <div class="trackBg"><div class="trackFill fillSlow" style="width: 100%;"></div></div>
+                                <span class="deltaVal mono">6.2x Baseline</span>
+                            </div>
+                            <div class="deltaTrack">
+                                <span class="deltaLabel mono">Custom DW</span>
+                                <div class="trackBg"><div class="trackFill fillFast" style="width: 16.1%;"></div></div>
+                                <span class="deltaVal mono highlightVal">0.098 ms (620 GB/s)</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="projectInfo">
+                    <p class="projectDates">0.098 ms • 620 GB/s • 5/5 Tests Passed • Submission #3747</p>
+                    <p class="projectTitle">
+                        <a class="titleLink" href="https://github.com/thekhananas/mlsys_coursework_project/blob/main/submission/gpu_dwconv2d_inference.cu" target="_blank">
+                            Depthwise 2D Convolution Kernel ↗
+                        </a>
+                    </p>
+                    <p class="projectDescription">
+                        Direct spatial convolution mapped as one thread per output pixel across a 3D grid <code>(spatial_blocks, C, N)</code>. Eliminates memory allocation overhead through inline coordinate boundary checks and aligns thread indexing with output width for coalesced memory reads.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Case 03: Measured Performance Summary Matrix -->
+            <div class="project">
+                
+                <!-- Square Visual Aid for Performance Metrics -->
+                <div class="projectMedia">
+                    <div class="liveUnit squareBox">
+                        
+                        <div class="unitTopBar">
+                            <span class="unitKicker mono">Empirical Saturation</span>
+                            <span class="unitPill mono">RTX 4080 (880 GB/s Peak)</span>
+                        </div>
+
+                        <div class="summaryMatrix">
+                            <div class="matrixRow matrixHead">
+                                <span>Kernel</span>
+                                <span>Latency</span>
+                                <span>Bandwidth</span>
+                                <span>Speedup</span>
+                            </div>
+
+                            <div class="matrixRow matrixHighlight">
+                                <span>Batch Normalisation</span>
+                                <span class="mono">0.981 ms</span>
+                                <span class="mono">742 GB/s</span>
+                                <span class="mono highlightVal">4.8x</span>
+                            </div>
+
+                            <div class="matrixRow matrixHighlight">
+                                <span>Depthwise Conv2D</span>
+                                <span class="mono">0.098 ms</span>
+                                <span class="mono">620 GB/s</span>
+                                <span class="mono highlightVal">6.2x</span>
+                            </div>
+
+                            <div class="matrixRow matrixMuted">
+                                <span>cuDNN Baseline (Est.)</span>
+                                <span class="mono">~1.25 ms</span>
+                                <span class="mono">~580 GB/s</span>
+                                <span class="mono">3.7x</span>
+                            </div>
+
+                            <div class="matrixRow matrixMuted">
+                                <span>Single-Threaded CPU Ref</span>
+                                <span class="mono">4.72 ms</span>
+                                <span class="mono">--</span>
+                                <span class="mono">1.0x</span>
+                            </div>
+                        </div>
+
+                        <div class="matrixNote mono">
+                            <span>VRAM Saturation: 84.3% (BN) • 70.5% (DWConv) • Zero Atomics</span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="projectInfo">
+                    <p class="projectDates">Bitwise Parity Verified • Evaluated Across MobileNet &amp; LLaMA Dimensions</p>
+                    <p class="projectTitle">Hardware Saturation &amp; Latency Summary</p>
+                    <p class="projectDescription">
+                        Both operators are memory-bound during inference. By restructuring thread indexing and avoiding intermediate memory round-trips, execution speed is pushed near the theoretical hardware memory limits of the GPU.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Back to top -->
+            <a class="links bottom" href="#top">Back to top ↑</a>
+
+        </div>
+
+    </content>
+
+</body>
+</html>

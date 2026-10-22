@@ -1,0 +1,546 @@
+/* ==========================================================================
+   Anas Khan — Systems Engineering Showcase
+   Design Direction: Alex Alspaugh Editorial Aesthetic (White Theme)
+   Visual Aids: DeepMind Live Animated SVG Units (1:1 Square Dimension)
+   Philosophy: "Don't Make Me Think" (Steve Krug) • Pure Visual Signal
+   ========================================================================== */
+
+html {
+    scroll-behavior: smooth;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: #ffffff;
+    color: #4D4D4D;
+    font-family: 'Newsreader', Georgia, 'Times New Roman', serif;
+    font-size: 18px;
+    line-height: 26px;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    min-height: 100vh;
+    padding-top: 100px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+    background-color: #e5e5e5;
+    color: #000000;
+}
+
+content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    max-width: 604px;
+    padding: 20px 20px 80px 20px;
+    gap: 56px;
+}
+
+/* Info / Bio Block */
+.info {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.namewrap {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    gap: 2px;
+}
+
+.name {
+    color: #000000;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+}
+
+.role {
+    color: #737373;
+    font-size: 14.5px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: -0.02em;
+}
+
+.bio {
+    color: #4D4D4D;
+}
+
+a {
+    color: #4D4D4D;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+a:hover {
+    text-decoration: underline;
+    color: #000000;
+}
+
+/* Monospace Links Row */
+.links {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 18px;
+    letter-spacing: 0.39px;
+    text-transform: uppercase;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    color: #8C8C8C;
+}
+
+.links a {
+    color: #4D4D4D;
+}
+
+.links a:hover {
+    color: #000000;
+    text-decoration: underline;
+}
+
+/* Work Showcase */
+.work {
+    display: flex;
+    flex-direction: column;
+    gap: 64px;
+}
+
+.project {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Square Dimension Media Container (1:1 Aspect Ratio) */
+.projectMedia {
+    position: relative;
+    background-color: #FAFAFB;
+    border: 1px solid #EAEAEA;
+    border-radius: 12px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.02);
+}
+
+/* Live Animated Unit Container */
+.liveUnit.squareBox {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.unitTopBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #EAEAEA;
+}
+
+.unitKicker {
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #8C8C8C;
+}
+
+.unitPill {
+    font-size: 11px;
+    font-weight: 600;
+    color: #059669;
+    background-color: #ECFDF5;
+    border: 1px solid #A7F3D0;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+/* SVG Stage */
+.svgStage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin: auto 0;
+}
+
+.animSvg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* SVG Typography & Styling */
+.svgLabel {
+    font-size: 9.5px;
+    letter-spacing: 0.4px;
+    fill: #6B7280;
+    font-weight: 500;
+}
+
+.highlightLabel {
+    fill: #059669;
+    font-weight: 600;
+}
+
+.svgTime {
+    font-size: 10px;
+    text-anchor: end;
+}
+
+.slowTime {
+    fill: #9CA3AF;
+}
+
+.fastTime {
+    fill: #059669;
+    font-weight: 600;
+}
+
+.laneBg {
+    stroke-width: 1;
+}
+
+.laneNaive {
+    fill: #F3F4F6;
+    stroke: #E5E7EB;
+}
+
+.laneFused {
+    fill: #F0FDF4;
+    stroke: #BBF7D0;
+}
+
+.nodeBox {
+    fill: #FFFFFF;
+    stroke: #D1D5DB;
+    stroke-width: 1;
+}
+
+.fastNode {
+    fill: #FFFFFF;
+    stroke: #86EFAC;
+    stroke-width: 1.2;
+}
+
+.nodeText {
+    font-size: 9.5px;
+    text-anchor: middle;
+    fill: #374151;
+}
+
+.nodeSubText {
+    font-size: 7.5px;
+    text-anchor: middle;
+    fill: #059669;
+}
+
+.boldText {
+    font-weight: 600;
+    fill: #065F46;
+}
+
+.wirePath {
+    stroke-width: 1.5;
+}
+
+.wireSlow {
+    stroke: #D1D5DB;
+    stroke-dasharray: 3 3;
+}
+
+.wireFast {
+    stroke: #86EFAC;
+    stroke-width: 2;
+}
+
+/* Live Flow Particles */
+.pulseDot {
+    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.15));
+}
+
+.dotSlow {
+    fill: #9CA3AF;
+}
+
+.dotFast {
+    fill: #059669;
+}
+
+/* Spatial Grid Styles (DWConv) */
+.pixelBox {
+    stroke-width: 1;
+}
+
+.padPixel {
+    fill: #F9FAFB;
+    stroke: #E5E7EB;
+    stroke-dasharray: 2 2;
+}
+
+.innerPixel {
+    fill: #FFFFFF;
+    stroke: #CBD5E1;
+}
+
+.slidingFilter {
+    fill: rgba(5, 150, 105, 0.14);
+    stroke: #059669;
+    stroke-width: 2;
+    stroke-dasharray: 4 2;
+    filter: drop-shadow(0 2px 6px rgba(5, 150, 105, 0.25));
+}
+
+.svgArrowText {
+    font-size: 9px;
+    fill: #059669;
+    text-anchor: middle;
+    font-weight: 500;
+}
+
+.outPixel {
+    fill: #F9FAFB;
+    stroke: #D1D5DB;
+    stroke-width: 1;
+    animation: pixelCycle 6s infinite;
+}
+
+.pActive1 { animation-delay: 0.0s; }
+.pActive2 { animation-delay: 0.6s; }
+.pActive3 { animation-delay: 1.2s; }
+.pActive4 { animation-delay: 1.8s; }
+.pActive5 { animation-delay: 2.4s; }
+.pActive6 { animation-delay: 3.0s; }
+.pActive7 { animation-delay: 3.6s; }
+.pActive8 { animation-delay: 4.2s; }
+.pActive9 { animation-delay: 4.8s; }
+
+@keyframes pixelCycle {
+    0%, 100% {
+        fill: #F9FAFB;
+        stroke: #D1D5DB;
+    }
+    10%, 25% {
+        fill: #DCFCE7;
+        stroke: #059669;
+        filter: drop-shadow(0 0 4px rgba(5, 150, 105, 0.3));
+    }
+}
+
+.padDot {
+    fill: #9CA3AF;
+}
+
+.svgLegendText {
+    font-size: 8.5px;
+    fill: #6B7280;
+}
+
+/* Bottom Latency Delta Bars */
+.unitBottomBar {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding-top: 10px;
+    border-top: 1px solid #EAEAEA;
+}
+
+.deltaTrack {
+    display: grid;
+    grid-template-columns: 75px 1fr 115px;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+}
+
+.deltaLabel {
+    color: #6B7280;
+    font-size: 10.5px;
+}
+
+.trackBg {
+    height: 7px;
+    background-color: #E5E7EB;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.trackFill {
+    height: 100%;
+    border-radius: 4px;
+}
+
+.fillSlow {
+    background-color: #9CA3AF;
+}
+
+.fillFast {
+    background-color: #059669;
+    animation: barPulse 2.5s infinite ease-in-out;
+}
+
+@keyframes barPulse {
+    0%, 100% { opacity: 0.9; }
+    50% { opacity: 1; filter: brightness(1.15); }
+}
+
+.deltaVal {
+    text-align: right;
+    font-size: 11px;
+    color: #374151;
+}
+
+.highlightVal {
+    color: #059669 !important;
+    font-weight: 600;
+}
+
+/* Matrix Summary (Square 3) */
+.summaryMatrix {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin: auto 0;
+}
+
+.matrixRow {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr 1.2fr 1fr;
+    padding: 9px 12px;
+    border-radius: 6px;
+    font-size: 13.5px;
+    align-items: center;
+}
+
+.matrixHead {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: #8C8C8C;
+    border-bottom: 1px solid #E5E5E8;
+    padding-bottom: 6px;
+}
+
+.matrixHighlight {
+    background-color: #F0FDF4;
+    border: 1px solid #DCFCE7;
+    color: #000000;
+    font-weight: 500;
+}
+
+.matrixMuted {
+    color: #8C8C8C;
+    font-size: 12.5px;
+}
+
+.matrixNote {
+    padding-top: 10px;
+    border-top: 1px solid #EAEAEA;
+    font-size: 11px;
+    color: #6B7280;
+    text-align: center;
+}
+
+/* Project Info Below Square */
+.projectInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.projectDates {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 18px;
+    letter-spacing: 0.39px;
+    text-transform: uppercase;
+    color: #737373;
+}
+
+.projectTitle {
+    color: #000000;
+    font-size: 18px;
+    font-weight: 500;
+    margin-top: 2px;
+}
+
+.titleLink {
+    color: #000000;
+}
+
+.titleLink:hover {
+    text-decoration: underline;
+}
+
+.projectDescription {
+    color: #4D4D4D;
+    font-size: 16.5px;
+    line-height: 24px;
+}
+
+.projectDescription code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 1px 4px;
+    background-color: #F0F0F2;
+    border-radius: 3px;
+    color: #1A1A1A;
+}
+
+.mono {
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Back to Top */
+.bottom {
+    margin-top: 16px;
+    padding-top: 24px;
+    border-top: 1px solid #EBEBED;
+    display: inline-block;
+    color: #737373;
+}
+
+/* Responsive */
+@media screen and (max-width: 640px) {
+    body {
+        padding-top: 48px;
+        font-size: 17px;
+        line-height: 24px;
+    }
+
+    content {
+        gap: 44px;
+        padding: 16px 16px 64px 16px;
+    }
+
+    .projectMedia {
+        padding: 14px;
+    }
+
+    .deltaTrack {
+        grid-template-columns: 60px 1fr 95px;
+    }
+
+    .matrixRow {
+        font-size: 12px;
+        padding: 8px 6px;
+    }
+}
