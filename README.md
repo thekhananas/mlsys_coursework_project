@@ -2,9 +2,9 @@
 
 High-performance, dependency-free CUDA C++ kernels developed for **COMP70114 (Machine Learning Systems & Hardware)** at Imperial College London.
 
-> 🌐 **Live Interactive Showcase & Hardware Simulator:**  
+> **Live Interactive Showcase & Hardware Simulator:**  
 > [**https://thekhananas.github.io/mlsys_coursework_project/**](https://thekhananas.github.io/mlsys_coursework_project/)  
-> *(Features interactive thread-execution visualizers, live memory bandwidth profiler, and verified evaluation screenshots)*
+> *(Features interactive thread-execution visualizers and live memory bandwidth profiler)*
 
 ---
 
