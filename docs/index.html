@@ -51,7 +51,7 @@
                         
                         <div class="unitTopBar">
                             <span class="unitKicker mono">Live Execution Flow</span>
-                            <span class="unitPill mono">4.8x Speedup</span>
+                            <span class="unitPill mono">1.34x Speedup</span>
                         </div>
 
                         <!-- Live Animated SVG Schema for Batch Normalisation -->
@@ -62,22 +62,22 @@
                                 <rect x="10" y="115" width="440" height="95" rx="8" class="laneBg laneFused" />
 
                                 <!-- Labels -->
-                                <text x="24" y="32" class="svgLabel mono">STANDARD (UNFUSED 2-PASS)</text>
-                                <text x="350" y="32" class="svgTime mono slowTime">4.72 ms</text>
+                                <text x="24" y="32" class="svgLabel mono">INITIAL CUDA (256 THR/CH)</text>
+                                <text x="350" y="32" class="svgTime mono slowTime">1.316 ms</text>
 
-                                <text x="24" y="137" class="svgLabel mono highlightLabel">CUSTOM (FUSED 1-PASS STREAM)</text>
+                                <text x="24" y="137" class="svgLabel mono highlightLabel">TUNED FUSED KERNEL (1024 THR/CH)</text>
                                 <text x="350" y="137" class="svgTime mono fastTime">0.981 ms</text>
 
-                                <!-- Top Lane: 2 Memory Roundtrips (Slow) -->
+                                <!-- Top Lane: Initial 256-Thread CUDA Baseline -->
                                 <!-- Nodes -->
                                 <rect x="24" y="48" width="60" height="36" rx="4" class="nodeBox" />
                                 <text x="54" y="70" class="nodeText mono">DRAM</text>
 
                                 <rect x="135" y="48" width="85" height="36" rx="4" class="nodeBox" />
-                                <text x="177" y="70" class="nodeText mono">Pass 1: μ, σ²</text>
+                                <text x="177" y="70" class="nodeText mono">256 Thr/Ch</text>
 
                                 <rect x="270" y="48" width="85" height="36" rx="4" class="nodeBox" />
-                                <text x="312" y="70" class="nodeText mono">Pass 2: Norm</text>
+                                <text x="312" y="70" class="nodeText mono">2 Passes</text>
 
                                 <rect x="390" y="48" width="50" height="36" rx="4" class="nodeBox" />
                                 <text x="415" y="70" class="nodeText mono">DRAM</text>
@@ -88,7 +88,7 @@
                                     <animateMotion path="M84 66 H135 M220 66 H270 M355 66 H390" dur="3.5s" repeatCount="indefinite" />
                                 </circle>
 
-                                <!-- Bottom Lane: Fused Streaming (Fast) -->
+                                <!-- Bottom Lane: Tuned Fused Kernel (Fast) -->
                                 <rect x="24" y="152" width="80" height="42" rx="4" class="nodeBox fastNode" />
                                 <text x="64" y="172" class="nodeText mono boldText">float4</text>
                                 <text x="64" y="185" class="nodeSubText mono">128-bit load</text>
@@ -118,14 +118,14 @@
                         <!-- Live Comparative Delta Bar -->
                         <div class="unitBottomBar">
                             <div class="deltaTrack">
-                                <span class="deltaLabel mono">CPU Ref</span>
+                                <span class="deltaLabel mono">CUDA v1</span>
                                 <div class="trackBg"><div class="trackFill fillSlow" style="width: 100%;"></div></div>
-                                <span class="deltaVal mono">4.72 ms</span>
+                                <span class="deltaVal mono">1.316 ms</span>
                             </div>
                             <div class="deltaTrack">
-                                <span class="deltaLabel mono">Custom BN</span>
-                                <div class="trackBg"><div class="trackFill fillFast" style="width: 20.8%;"></div></div>
-                                <span class="deltaVal mono highlightVal">0.981 ms (742 GB/s)</span>
+                                <span class="deltaLabel mono">CUDA Final</span>
+                                <div class="trackBg"><div class="trackFill fillFast" style="width: 74.5%;"></div></div>
+                                <span class="deltaVal mono highlightVal">0.981 ms (1.34x)</span>
                             </div>
                         </div>
 
@@ -133,14 +133,14 @@
                 </div>
 
                 <div class="projectInfo">
-                    <p class="projectDates">0.981 ms • 742 GB/s (84.3% VRAM Peak) • Submission #3739</p>
+                    <p class="projectDates">0.981 ms (4/4 Shapes) • Up to 1,598 GB/s (RTX 5090) • Submission #3869</p>
                     <p class="projectTitle">
                         <a class="titleLink" href="https://github.com/thekhananas/mlsys_coursework_project/blob/main/submission/gpu_bn_inference.cu" target="_blank">
                             Batch Normalisation Inference Kernel ↗
                         </a>
                     </p>
                     <p class="projectDescription">
-                        Fuses mean/variance reduction and affine normalization into a single memory pass. Uses 1-block-per-channel grid mapping, 128-bit <code>float4</code> vector loads, and register warp-shuffles (<code>__shfl_down_sync</code>) to collapse sums without shared-memory bank conflicts.
+                        Executes two passes over <code>x</code> (statistics reduction and affine normalisation) inside a single fused kernel launch using 1,024-thread per-channel blocks, L1/L2 cache reuse, 128-bit <code>float4</code> vector loads, and register warp-shuffles (<code>__shfl_down_sync</code>) without shared-memory bank conflicts.
                     </p>
                 </div>
             </div>
@@ -154,7 +154,7 @@
                         
                         <div class="unitTopBar">
                             <span class="unitKicker mono">Live Spatial Scanning</span>
-                            <span class="unitPill mono">6.2x Speedup</span>
+                            <span class="unitPill mono">5/5 CNN Shapes</span>
                         </div>
 
                         <!-- Live Animated SVG for Depthwise Spatial Convolution -->
@@ -239,14 +239,14 @@
                         <!-- Live Comparative Delta Bar -->
                         <div class="unitBottomBar">
                             <div class="deltaTrack">
-                                <span class="deltaLabel mono">CPU Ref</span>
+                                <span class="deltaLabel mono">Cold 1-Iter</span>
                                 <div class="trackBg"><div class="trackFill fillSlow" style="width: 100%;"></div></div>
-                                <span class="deltaVal mono">6.2x Baseline</span>
+                                <span class="deltaVal mono">0.170 ms (nsys)</span>
                             </div>
                             <div class="deltaTrack">
-                                <span class="deltaLabel mono">Custom DW</span>
-                                <div class="trackBg"><div class="trackFill fillFast" style="width: 16.1%;"></div></div>
-                                <span class="deltaVal mono highlightVal">0.098 ms (620 GB/s)</span>
+                                <span class="deltaLabel mono">Warmed OJ</span>
+                                <div class="trackBg"><div class="trackFill fillFast" style="width: 57.6%;"></div></div>
+                                <span class="deltaVal mono highlightVal">0.098 ms (5/5)</span>
                             </div>
                         </div>
 
@@ -254,14 +254,14 @@
                 </div>
 
                 <div class="projectInfo">
-                    <p class="projectDates">0.098 ms • 620 GB/s • 5/5 Tests Passed • Submission #3747</p>
+                    <p class="projectDates">0.098 ms (5/5 CNN Shapes) • Up to 1,134 GB/s (RTX 5090) • Submission #3747</p>
                     <p class="projectTitle">
                         <a class="titleLink" href="https://github.com/thekhananas/mlsys_coursework_project/blob/main/submission/gpu_dwconv2d_inference.cu" target="_blank">
                             Depthwise 2D Convolution Kernel ↗
                         </a>
                     </p>
                     <p class="projectDescription">
-                        Direct spatial convolution mapped as one thread per output pixel across a 3D grid <code>(spatial_blocks, C, N)</code>. Eliminates memory allocation overhead through inline coordinate boundary checks and aligns thread indexing with output width for coalesced memory reads.
+                        Direct spatial convolution mapped as one thread per output pixel across a 3D grid <code>(spatial_blocks, C, N)</code> with <code>BLOCK_SIZE = 256</code>. Eliminates explicit padding buffers via inline coordinate boundary checks, aligns thread indexing with output width for coalesced memory reads when <code>stride = 1</code>, and validates within <code>1e-5</code> of the CPU reference.
                     </p>
                 </div>
             </div>
@@ -274,59 +274,59 @@
                     <div class="liveUnit squareBox">
                         
                         <div class="unitTopBar">
-                            <span class="unitKicker mono">Empirical Saturation</span>
-                            <span class="unitPill mono">RTX 4080 (880 GB/s Peak)</span>
+                            <span class="unitKicker mono">Measured OJ Results</span>
+                            <span class="unitPill mono">RTX 5090 (1,792 GB/s Peak)</span>
                         </div>
 
                         <div class="summaryMatrix">
                             <div class="matrixRow matrixHead">
                                 <span>Kernel</span>
-                                <span>Latency</span>
-                                <span>Bandwidth</span>
-                                <span>Speedup</span>
+                                <span>Time Cost</span>
+                                <span>Peak BW (nsys)</span>
+                                <span>Cases</span>
                             </div>
 
                             <div class="matrixRow matrixHighlight">
-                                <span>Batch Normalisation</span>
+                                <span>BatchNorm (1024 thr)</span>
                                 <span class="mono">0.981 ms</span>
-                                <span class="mono">742 GB/s</span>
-                                <span class="mono highlightVal">4.8x</span>
+                                <span class="mono">1,598 GB/s</span>
+                                <span class="mono highlightVal">4/4</span>
                             </div>
 
                             <div class="matrixRow matrixHighlight">
                                 <span>Depthwise Conv2D</span>
                                 <span class="mono">0.098 ms</span>
-                                <span class="mono">620 GB/s</span>
-                                <span class="mono highlightVal">6.2x</span>
+                                <span class="mono">1,134 GB/s</span>
+                                <span class="mono highlightVal">5/5</span>
                             </div>
 
                             <div class="matrixRow matrixMuted">
-                                <span>cuDNN Baseline (Est.)</span>
-                                <span class="mono">~1.25 ms</span>
-                                <span class="mono">~580 GB/s</span>
-                                <span class="mono">3.7x</span>
-                            </div>
-
-                            <div class="matrixRow matrixMuted">
-                                <span>Single-Threaded CPU Ref</span>
-                                <span class="mono">4.72 ms</span>
+                                <span>BatchNorm v1 (256 thr)</span>
+                                <span class="mono">1.316 ms</span>
                                 <span class="mono">--</span>
-                                <span class="mono">1.0x</span>
+                                <span class="mono">4/4</span>
+                            </div>
+
+                            <div class="matrixRow matrixMuted">
+                                <span>CPU Ref (Correctness)</span>
+                                <span class="mono">Untimed</span>
+                                <span class="mono">--</span>
+                                <span class="mono">1e-5 tol</span>
                             </div>
                         </div>
 
                         <div class="matrixNote mono">
-                            <span>VRAM Saturation: 84.3% (BN) • 70.5% (DWConv) • Zero Atomics</span>
+                            <span>Summed cudaEvent Kernel Time • Up to 89.2% (BN) / 63.3% (DWC) Peak • Zero External Libs</span>
                         </div>
 
                     </div>
                 </div>
 
                 <div class="projectInfo">
-                    <p class="projectDates">Bitwise Parity Verified • Evaluated Across MobileNet &amp; LLaMA Dimensions</p>
+                    <p class="projectDates">Verified Within 1e-5 of CPU Reference • Vision/LLM Shapes (BN) • CNN Shapes (DWC)</p>
                     <p class="projectTitle">Hardware Saturation &amp; Latency Summary</p>
                     <p class="projectDescription">
-                        Both operators are memory-bound during inference. By restructuring thread indexing and avoiding intermediate memory round-trips, execution speed is pushed near the theoretical hardware memory limits of the GPU.
+                        Time Cost sums per-shape <code>cudaEvent</code> GPU kernel latencies across all benchmark cases (excluding host-device transfers). Both operators are memory-bandwidth bound; peak effective bandwidth values reflect single-iteration Nsight Systems traces measured on the RTX 5090 online judge.
                     </p>
                 </div>
             </div>
